@@ -1,5 +1,6 @@
 package com.example.demo.member.controller
 
+import com.example.demo.common.dto.BaseResponse
 import com.example.demo.member.dto.MemberDtoRequest
 import com.example.demo.member.service.MemberService
 import jakarta.validation.Valid
@@ -18,8 +19,9 @@ class MemberController(
      * 회원가입
      */
     @PostMapping("/signup")
-    fun signUP(@RequestBody @Valid memberDtoRequest: MemberDtoRequest): String {
-        return memberService.signUp(memberDtoRequest)
+    fun signUP(@RequestBody @Valid memberDtoRequest: MemberDtoRequest): BaseResponse<Unit> {
+        val resultMsg: String=memberService.signUp(memberDtoRequest)
+        return BaseResponse(message = resultMsg)
     }
 
 }
