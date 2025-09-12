@@ -2,6 +2,7 @@ package com.example.demo.member.dto
 
 import com.example.demo.common.annotation.ValidEnum
 import com.example.demo.common.status.Gender
+import com.example.demo.member.entity.Member
 import com.fasterxml.jackson.annotation.JsonProperty
 import jakarta.validation.constraints.Email
 import jakarta.validation.constraints.NotBlank
@@ -63,4 +64,8 @@ data class MemberDtoRequest (
     //확장함수 : String.toLocalDate 함수 -> String을 yyyy-MM-dd 타입으로 변환해줌
     private fun String.toLocalDate(): LocalDate=
         LocalDate.parse(this, DateTimeFormatter.ofPattern("yyyy-MM-dd"))
+
+    fun toEntity(): Member=
+        //엔티티 반환 함수
+        Member(id,loginId,password,name, birthDate, gender,email)
 }
