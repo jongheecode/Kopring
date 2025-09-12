@@ -8,7 +8,7 @@ data class MemberDtoRequest (
     val loginId:String,
     val password:String,
     val name:String,
-    val birthdate: LocalDate,
+    val birthDate: LocalDate,
     val gender: Gender,
     val email: String,
     )
