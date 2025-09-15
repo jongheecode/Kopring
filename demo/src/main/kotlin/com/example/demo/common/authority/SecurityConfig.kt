@@ -14,7 +14,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @Configuration
 @EnableWebSecurity
 class SecurityConfig(
-    private val JwtTokenProvider: JwtTokenProvider
+    private val jwtTokenProvider: JwtTokenProvider
 ) {
     @Bean
     fun filterChain(http: HttpSecurity): SecurityFilterChain{
@@ -27,7 +27,7 @@ class SecurityConfig(
                     .anyRequest().permitAll() //그 외에는 모두가 접근 가능
             }
             .addFilterBefore( //앞에 있는 필터가 먼저 실행되도록 설정
-                JwtAuthenticationFilter(JwtTokenProvider),
+                JwtAuthenticationFilter(jwtTokenProvider),
                 UsernamePasswordAuthenticationFilter::class.java
             )
 
