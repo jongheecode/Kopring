@@ -13,7 +13,7 @@ import java.time.format.DateTimeFormatter
 //요청/응답 전송 객체,엔티티와 분리
 data class MemberDtoRequest (
     val id: Long?,
-
+    
     @field:NotBlank
     @JsonProperty("loginId")
     private val _loginId:String?, //로그인 아이디
@@ -69,4 +69,65 @@ data class MemberDtoRequest (
     fun toEntity(): Member=
         //엔티티 반환 함수
         Member(id,loginId,password,name, birthDate, gender,email)
+    
+}
+
+//로그인 요청 DTO
+data class LoginRequest(
+    @field:NotBlank
+    @JsonProperty("loginId")
+    val loginId: String,
+    
+    @field:NotBlank
+    @JsonProperty("password")
+    val password: String
+)
+
+//로그인 응답 DTO (토큰 정보 포함)
+data class LoginResponse(
+    @JsonProperty("accessToken")
+    val accessToken: String,
+    
+    @JsonProperty("refreshToken")
+    val refreshToken: String,
+    
+    @JsonProperty("tokenType")
+    val tokenType: String = "Bearer",
+    
+    @JsonProperty("expiresIn")
+    val expiresIn: Long
+)
+
+//회원 정보 응답 DTO
+data class MemberResponse(
+    @JsonProperty("id")
+    val id: Long,
+    
+    @JsonProperty("loginId")
+    val loginId: String,
+    
+    @JsonProperty("name")
+    val name: String,
+    
+    @JsonProperty("birthDate")
+    val birthDate: String,
+    
+    @JsonProperty("gender")
+    val gender: String,
+    
+    @JsonProperty("email")
+    val email: String
+) {
+    companion object {
+        fun from(member: Member): MemberResponse {
+            return MemberResponse(
+                id = member.id!!,
+                loginId = member.loginId,
+                name = member.name,
+                birthDate = member.birthDate.toString(),
+                gender = member.gender.name,
+                email = member.email
+            )
+        }
+    }
 }

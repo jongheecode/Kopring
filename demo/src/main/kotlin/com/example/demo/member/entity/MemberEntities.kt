@@ -35,23 +35,23 @@ class Member(
     val loginId: String,
 
     @Column(nullable = false, length = 100)
-    val password: String,
+    var password: String,
 
     @Column(nullable = false, length = 10)
-    val name: String,
+    var name: String,
 
     @Column(nullable = false)
     //Temporal : TemporalType으로 날짜와 시간 매핑
     @Temporal(TemporalType.DATE)
-    val birthDate: LocalDate,
+    var birthDate: LocalDate,   
 
     @Column(nullable = false, length = 5)
     //Enum 타입 매핑 : String 그대로
     @Enumerated(EnumType.STRING)
-    val gender: Gender,
+    var gender: Gender,
 
     @Column(nullable = false, length = 30)
-    val email:String,
+    var email:String,
 ){
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "member") //멤버와 권한을 일대다로 연결
     val memberRole: List<MemberRole>?=null

@@ -1,31 +1,57 @@
 package com.example.demo.common.authority
 
-import jakarta.servlet.http.HttpServletRequest
-import jakarta.servlet.ServletRequest
-import jakarta.servlet.ServletResponse
 import jakarta.servlet.FilterChain
-import org.springframework.web.filter.GenericFilterBean
+import jakarta.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletResponse
 import org.springframework.security.core.context.SecurityContextHolder
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
+import org.springframework.stereotype.Component
+import org.springframework.util.StringUtils
+import org.springframework.web.filter.OncePerRequestFilter // import 변경
 
+@Component
 class JwtAuthenticationFilter(
     private val jwtTokenProvider: JwtTokenProvider
-) :GenericFilterBean() { //GenericFilterBean : 필터 기능을 구현하기 위한 클래스
-    override fun doFilter(request: ServletRequest?,response: ServletResponse?, chain: FilterChain?) {
-        val token=resolveToken(request as HttpServletRequest)
+) : OncePerRequestFilter() { // GenericFilterBean 대신 OncePerRequestFilter 상속
 
-        if(token!=null && jwtTokenProvider.validateToken(token)){
-            val authentication=jwtTokenProvider.getAuthentication(token)
-            SecurityContextHolder.getContext().authentication=authentication
+    override fun doFilterInternal(
+        request: HttpServletRequest,
+        response: HttpServletResponse,
+        filterChain: FilterChain
+    ) {
+        // 토큰이 필요 없는 URL은 필터를 건너뜁니다.
+        val path = request.requestURI
+        val excludedUrls = listOf(
+            "/", "/home", "/login", "/signup",
+            "/api/member/signup", "/api/member/login"
+        )
+        // 정적 리소스 URL도 예외 처리
+        val staticResources = listOf(
+            "/css/", "/js/", "/images/", "/favicon.ico"
+        )
+
+        // URL이 예외 목록에 포함되면 다음 필터로 바로 넘어갑니다.
+        if (excludedUrls.any { path == it } || staticResources.any { path.startsWith(it) }) {
+            filterChain.doFilter(request, response)
+            return
         }
 
-        chain?.doFilter(request,response)
-}
-    private fun resolveToken(request: HttpServletRequest): String? {
-        val bearerToken=request.getHeader("Authorization") //헤더에 Authorization이 있는지 확인하고 문자열 추출
+        val token = resolveToken(request)
 
-        return if(bearerToken!=null && bearerToken.startsWith("Bearer ")){ //Bearer로 시작하는지 확인
-            bearerToken.substring(7)    //맞다면 키값만 뽑아옴
-        }else{
+        if (token != null && jwtTokenProvider.validateToken(token)) {
+            val authentication = jwtTokenProvider.getAuthentication(token)
+            SecurityContextHolder.getContext().authentication = authentication
+        }
+
+        filterChain.doFilter(request, response)
+    }
+
+    private fun resolveToken(request: HttpServletRequest): String? {
+        val bearerToken = request.getHeader("Authorization")
+
+        return if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
+            bearerToken.substring(7)
+        } else {
             null
         }
     }

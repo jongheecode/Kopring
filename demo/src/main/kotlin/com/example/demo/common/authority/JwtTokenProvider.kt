@@ -29,7 +29,7 @@ class JwtTokenProvider {
     private val key by lazy { Keys.hmacShaKeyFor(Decoders.BASE64.decode(secretKey))} //시크릿 키를 사용하여 키 생성
 
     /**
-     * 토큰 생성
+     * 토큰 생성 (기존 방식)
      */
     fun createToken(authentication: Authentication): TokenInfo {
         val authorities:String=authentication
@@ -49,7 +49,58 @@ class JwtTokenProvider {
         .signWith(key)  //signWith : 토큰 서명
         .compact()  //compact() : 토큰 생성
 
-        return TokenInfo(grantType="Bearer",accessToken)  //TokenInfo : 토큰 정보
+        return TokenInfo(grantType="Bearer", accessToken, "", EXPIRATION_MILLISECONDS)  //TokenInfo : 토큰 정보
+    }
+
+    /**
+     * 회원 ID와 로그인 ID로 토큰 생성 (새로운 방식)
+     */
+    fun generateToken(memberId: Long, loginId: String): TokenInfo {
+        val now = Date()
+        val accessExpiration = Date(now.time + EXPIRATION_MILLISECONDS)
+        val refreshExpiration = Date(now.time + EXPIRATION_MILLISECONDS * 2) // 리프레시 토큰은 1시간
+
+        // Access Token 생성
+        val accessToken = Jwts.builder()
+            .setSubject(memberId.toString()) // 회원 ID를 subject로 사용
+            .claim("loginId", loginId) // 로그인 ID를 claim에 저장
+            .claim("auth", "ROLE_MEMBER") // 기본 권한
+            .setIssuedAt(now)
+            .setExpiration(accessExpiration)
+            .signWith(key)
+            .compact()
+
+        // Refresh Token 생성
+        val refreshToken = Jwts.builder()
+            .setSubject(memberId.toString())
+            .claim("type", "refresh")
+            .setIssuedAt(now)
+            .setExpiration(refreshExpiration)
+            .signWith(key)
+            .compact()
+
+        return TokenInfo(
+            grantType = "Bearer",
+            accessToken = accessToken,
+            refreshToken = refreshToken,
+            accessTokenExpirationTime = EXPIRATION_MILLISECONDS
+        )
+    }
+
+    /**
+     * 토큰에서 회원 ID 추출
+     */
+    fun getMemberIdFromToken(token: String): Long {
+        val claims = getClaims(token)
+        return claims.subject.toLong()
+    }
+
+    /**
+     * 토큰에서 로그인 ID 추출
+     */
+    fun getLoginIdFromToken(token: String): String {
+        val claims = getClaims(token)
+        return claims["loginId"] as String
     }
 
     /**
