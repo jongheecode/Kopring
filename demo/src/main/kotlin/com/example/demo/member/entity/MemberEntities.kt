@@ -20,6 +20,7 @@ import jakarta.persistence.TemporalType
 import jakarta.persistence.UniqueConstraint
 import java.time.LocalDate
 
+//JPA 엔티티 정의(테이블 매핑, 연관관계, 컬럼)
 @Entity //JPA에서 관리하는 엔티티를 나타내는 어노테이션(데이터베이스의 행 하나)
 @Table(
     //로그인 아이디 중복 방지

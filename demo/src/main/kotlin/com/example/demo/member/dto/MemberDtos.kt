@@ -10,6 +10,7 @@ import jakarta.validation.constraints.Pattern
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
+//요청/응답 전송 객체,엔티티와 분리
 data class MemberDtoRequest (
     val id: Long?,
 

@@ -10,6 +10,8 @@ import com.example.demo.member.repository.MemberRoleRepository
 import jakarta.transaction.Transactional
 import org.springframework.stereotype.Service
 
+
+//핵심 도메인 로직, 트랜잭션 경계,예외 처리
 @Transactional
 @Service
 class MemberService (
