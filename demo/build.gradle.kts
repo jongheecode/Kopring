@@ -13,7 +13,7 @@ description = "Demo project for Spring Boot"
 
 java {
 	toolchain {
-		languageVersion = JavaLanguageVersion.of(17)
+		languageVersion = JavaLanguageVersion.of(21)
 	}
 }
 
@@ -39,16 +39,16 @@ dependencies {
 }
 
 kotlin {
-	jvmToolchain(17)
+	jvmToolchain(21)
 	compilerOptions {
-		jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+		jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21)
 		freeCompilerArgs.addAll("-Xjsr305=strict")
 	}
 }
 
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
 	kotlinOptions {
-		jvmTarget = "17"
+		jvmTarget = "21"
 	}
 }
 

@@ -21,23 +21,29 @@ class SecurityConfig(
         http
             .httpBasic { it.disable() }
             .csrf { it.disable() }
-            // JWT 인증 방식은 무상태(stateless)이므로 세션을 사용하지 않습니다.
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
             .authorizeHttpRequests {
                 it.requestMatchers(
-                    "/", "/home", "/login", "/signup",
-                    "/api/member/signup", "/api/member/login",
-                    "/css/**", "/js/**", "/images/**"
-                ).permitAll() // 특정 경로(로그인/회원가입 등)는 인증 없이 접근을 허용합니다.
-                .anyRequest().authenticated() // 그 외의 모든 요청은 JWT 토큰 인증이 필요합니다.
+                    "/", "/login", "/signup", "/css/**", "/js/**", "/images/**",
+                    "/api/member/signup"
+                ).permitAll() // "/"도 인증 없이 접근 허용
+                    // 로그인 처리 URL은 Spring Security에 맡깁니다.
+                    .requestMatchers("/login", "/api/member/login").permitAll()
+                    .anyRequest().authenticated()
             }
-            // 기존 `formLogin` 설정을 제거합니다.
+            .formLogin {
+                it.loginPage("/login") // 로그인 페이지의 URL
+                    .loginProcessingUrl("/api/member/login") // 로그인 폼이 제출될 URL
+                    .defaultSuccessUrl("/home", true) // 로그인 성공 시 이동할 URL
+                    .failureUrl("/login?error") // 로그인 실패 시 이동할 URL
+                    .permitAll()
+            }
             .addFilterBefore(
                 JwtAuthenticationFilter(jwtTokenProvider),
                 UsernamePasswordAuthenticationFilter::class.java
             )
 
-        return http.build() // 최종 필터 체인 구성
+        return http.build()
     }
 
     @Bean
