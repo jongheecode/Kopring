@@ -22,9 +22,8 @@ class SecurityConfig(
             .csrf { it.disable() }
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
             .authorizeHttpRequests {
-                // 루트, 홈, 로그인, 회원가입 페이지에 대한 접근을 모두 허용합니다.
                 it.requestMatchers(
-                    "/", "home", "/index", "/login", "/signup", "/css/**", "/js/**", "/images/**",
+                    "/", "/home", "/login", "/signup", "/css/**", "/js/**", "/images/**", "/favicon.ico",
                     "/api/member/signup", "/api/member/login"
                 ).permitAll()
                     .anyRequest().authenticated()
