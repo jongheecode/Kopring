@@ -8,7 +8,6 @@ import org.springframework.ui.Model
 import org.springframework.validation.BindingResult
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestMapping
 
 /**
  * 웹 페이지 컨트롤러 (Thymeleaf 템플릿 사용)
@@ -52,12 +51,12 @@ class WebController(
     fun signupPage(model: Model): String {
         model.addAttribute("memberDtoRequest", MemberDtoRequest(
             id = null,
-            _loginId = null,
-            _password = null,
-            _name = null,
-            _birthDate = null,
-            _gender = null,
-            _email = null
+            loginId = null, // 변경: 밑줄 제거
+            password = null, // 변경: 밑줄 제거
+            name = null,
+            birthDate = null,
+            gender = null,
+            email = null
         ))
         return "signup"
     }
@@ -76,8 +75,8 @@ class WebController(
         }
 
         try {
-            val resultMsg = memberService.signUp(memberDtoRequest)
-            model.addAttribute("success", resultMsg)
+            memberService.signUp(memberDtoRequest)
+            model.addAttribute("success", "회원가입이 완료되었습니다!")
             return "login" // 회원가입 성공 시 로그인 페이지로 이동
         } catch (e: Exception) {
             model.addAttribute("error", e.message)
