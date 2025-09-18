@@ -10,7 +10,6 @@ import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
 
-
 @Configuration
 @EnableWebSecurity
 class SecurityConfig(
@@ -21,26 +20,23 @@ class SecurityConfig(
         http
             .httpBasic { it.disable() }
             .csrf { it.disable() }
-            // JWT 인증 방식은 무상태(stateless)이므로 세션을 사용하지 않습니다.
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
             .authorizeHttpRequests {
                 it.requestMatchers(
-                    "/", "/home", "/login", "/signup",
-                    "/api/member/signup", "/api/member/login",
-                    "/css/**", "/js/**", "/images/**"
-                ).permitAll() // 특정 경로(로그인/회원가입 등)는 인증 없이 접근을 허용합니다.
-                .anyRequest().authenticated() // 그 외의 모든 요청은 JWT 토큰 인증이 필요합니다.
+                    "/", "/home", "/login", "/signup", "/css/**", "/js/**", "/images/**", "/favicon.ico",
+                    "/api/member/signup", "/api/member/login"
+                ).permitAll()
+                    .anyRequest().authenticated()
             }
-            // 기존 `formLogin` 설정을 제거합니다.
             .addFilterBefore(
                 JwtAuthenticationFilter(jwtTokenProvider),
                 UsernamePasswordAuthenticationFilter::class.java
             )
 
-        return http.build() // 최종 필터 체인 구성
+        return http.build()
     }
 
     @Bean
     fun passwordEncoder(): PasswordEncoder =
-        PasswordEncoderFactories.createDelegatingPasswordEncoder() // 다양한 비밀번호 인코딩 방식을 지원합니다.
+        PasswordEncoderFactories.createDelegatingPasswordEncoder()
 }

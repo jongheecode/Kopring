@@ -6,15 +6,6 @@ import org.springframework.web.bind.annotation.RestController
 
 @RestController
 class HomeController {
-
-    @GetMapping("/")
-    fun home(): BaseResponse<String> {
-        return BaseResponse(
-            data = "Spring Boot 서버가 정상적으로 실행 중입니다!",
-            message = "서버 연결 성공"
-        )
-    }
-
     @GetMapping("/health")
     fun health(): BaseResponse<String> {
         return BaseResponse(
