@@ -20,28 +20,15 @@ class JwtAuthenticationFilter(
         response: HttpServletResponse,
         filterChain: FilterChain
     ) {
-        val path = request.requestURI
-        val excludedUrls = listOf(
-            "/", "/home", "/login", "/signup",
-            "/api/member/signup", "/api/member/login"
-        )
-        val staticResources = listOf(
-            "/css/", "/js/", "/images/", "/favicon.ico"
-        )
-
-        // URL이 예외 목록에 포함되면 다음 필터로 바로 넘깁니다.
-        if (excludedUrls.any { path == it } || staticResources.any { path.startsWith(it) }) {
-            filterChain.doFilter(request, response)
-            return
-        }
-
         val token = resolveToken(request)
 
+        // 토큰이 존재하고 유효한 경우에만 인증 정보를 설정합니다.
         if (token != null && jwtTokenProvider.validateToken(token)) {
             val authentication = jwtTokenProvider.getAuthentication(token)
             SecurityContextHolder.getContext().authentication = authentication
         }
 
+        // 다음 필터로 요청을 넘깁니다.
         filterChain.doFilter(request, response)
     }
 

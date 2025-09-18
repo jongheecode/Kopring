@@ -1,6 +1,5 @@
 package com.example.demo.controller
 
-import com.example.demo.common.dto.BaseResponse
 import com.example.demo.member.dto.MemberDtoRequest
 import com.example.demo.member.service.MemberService
 import jakarta.validation.Valid
@@ -15,16 +14,22 @@ import org.springframework.web.bind.annotation.RequestMapping
  * 웹 페이지 컨트롤러 (Thymeleaf 템플릿 사용)
  */
 @Controller
-@RequestMapping
 class WebController(
     private val memberService: MemberService
 ) {
+    /**
+     * 루트 페이지 (index.html)
+     */
+    @GetMapping("/")
+    fun home(): String {
+        return "index"
+    }
 
     /**
      * 홈 페이지
      */
     @GetMapping("/home")
-    fun home(model: Model): String {
+    fun homePage(model: Model): String {
         model.addAttribute("message", "Spring Boot 서버가 정상적으로 실행 중입니다!")
         return "index"
     }

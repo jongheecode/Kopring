@@ -37,7 +37,7 @@ class JwtTokenProvider {
         .joinToString(",",transform=GrantedAuthority::getAuthority)
 
         val now=Date()
-        val accessExpration=Date(now.time+EXPIRATION_MILLISECONDS)
+        val accessExpiration=Date(now.time+EXPIRATION_MILLISECONDS)
 
         //accessToken 생성
         val accessToken=Jwts
@@ -45,7 +45,7 @@ class JwtTokenProvider {
         .setSubject(authentication.name)  //subject : 토큰에 담을 정보
         .claim("auth",authorities)  //claim : 토큰에 담을 정보
         .setIssuedAt(now)  //issuedAt : 토큰 발급 시간
-        .setExpiration(accessExpration)  //expiration : 토큰 만료 시간
+        .setExpiration(accessExpiration)  //expiration : 토큰 만료 시간
         .signWith(key)  //signWith : 토큰 서명
         .compact()  //compact() : 토큰 생성
 

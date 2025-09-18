@@ -10,7 +10,6 @@ import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
 
-
 @Configuration
 @EnableWebSecurity
 class SecurityConfig(
@@ -23,20 +22,12 @@ class SecurityConfig(
             .csrf { it.disable() }
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
             .authorizeHttpRequests {
+                // 루트, 홈, 로그인, 회원가입 페이지에 대한 접근을 모두 허용합니다.
                 it.requestMatchers(
-                    "/", "/login", "/signup", "/css/**", "/js/**", "/images/**",
-                    "/api/member/signup"
-                ).permitAll() // "/"도 인증 없이 접근 허용
-                    // 로그인 처리 URL은 Spring Security에 맡깁니다.
-                    .requestMatchers("/login", "/api/member/login").permitAll()
+                    "/", "home", "/index", "/login", "/signup", "/css/**", "/js/**", "/images/**",
+                    "/api/member/signup", "/api/member/login"
+                ).permitAll()
                     .anyRequest().authenticated()
-            }
-            .formLogin {
-                it.loginPage("/login") // 로그인 페이지의 URL
-                    .loginProcessingUrl("/api/member/login") // 로그인 폼이 제출될 URL
-                    .defaultSuccessUrl("/home", true) // 로그인 성공 시 이동할 URL
-                    .failureUrl("/login?error") // 로그인 실패 시 이동할 URL
-                    .permitAll()
             }
             .addFilterBefore(
                 JwtAuthenticationFilter(jwtTokenProvider),
@@ -48,5 +39,5 @@ class SecurityConfig(
 
     @Bean
     fun passwordEncoder(): PasswordEncoder =
-        PasswordEncoderFactories.createDelegatingPasswordEncoder() // 다양한 비밀번호 인코딩 방식을 지원합니다.
+        PasswordEncoderFactories.createDelegatingPasswordEncoder()
 }
