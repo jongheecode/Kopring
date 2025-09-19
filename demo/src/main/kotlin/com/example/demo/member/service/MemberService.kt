@@ -1,8 +1,9 @@
 package com.example.demo.member.service
 
 import com.example.demo.common.authority.JwtTokenProvider
-import com.example.demo.common.authority.TokenInfo
 import com.example.demo.common.exception.InvalidInputException
+import com.example.demo.common.exception.PasswordMismatchException
+import com.example.demo.common.status.Gender
 import com.example.demo.common.status.ROLE
 import com.example.demo.member.dto.LoginRequest
 import com.example.demo.member.dto.LoginResponse
@@ -13,87 +14,75 @@ import com.example.demo.member.entity.MemberRole
 import com.example.demo.member.repository.MemberRepository
 import com.example.demo.member.repository.MemberRoleRepository
 import jakarta.transaction.Transactional
+import org.springframework.data.repository.findByIdOrNull
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
-
-//핵심 도메인 로직, 트랜잭션 경계,예외 처리
-@Transactional
 @Service
-class MemberService (
+@Transactional
+class MemberService(
     private val memberRepository: MemberRepository,
     private val memberRoleRepository: MemberRoleRepository,
     private val passwordEncoder: PasswordEncoder,
     private val jwtTokenProvider: JwtTokenProvider
-){
-    /**
-     * 회원가입
-     */
-    fun signUp(memberDtoRequest: MemberDtoRequest): String {
-        //ID 중복 검사
-        var member: Member?=memberRepository.findByLoginId(memberDtoRequest.loginId)
-        if(member!=null){
-            throw InvalidInputException("loginId","이미 등록된 ID 입니다.")
-        }
-        member=memberDtoRequest.toEntity()
-        //비밀번호 암호화
-        member.password = passwordEncoder.encode(member.password)
-        memberRepository.save(member)
+) {
 
-        val memberRole: MemberRole= MemberRole(null, ROLE.MEMBER,member)
-        memberRoleRepository.save(memberRole)
+    fun signUp(memberDtoRequest: MemberDtoRequest): String {
+        if (memberRepository.existsByLoginId(memberDtoRequest.loginId!!)) {
+            throw InvalidInputException("loginId", "이미 존재하는 아이디입니다.")
+        }
+        val encodedPassword = passwordEncoder.encode(memberDtoRequest.password)
+        val member = Member(
+            loginId = memberDtoRequest.loginId,
+            password = encodedPassword,
+            name = memberDtoRequest.name!!,
+            birthDate = LocalDate.parse(memberDtoRequest.birthDate, DateTimeFormatter.ofPattern("yyyy-MM-dd")),
+            gender = Gender.valueOf(memberDtoRequest.gender!!),
+            email = memberDtoRequest.email!!
+        )
+
+        memberRepository.save(member)
+        memberRoleRepository.save(MemberRole(member = member, role = ROLE.MEMBER))
+
         return "회원가입이 완료되었습니다."
     }
 
-    /**
-     * 로그인 - JWT 토큰 발행
-     */
     fun login(loginRequest: LoginRequest): LoginResponse {
-        //회원 조회
         val member = memberRepository.findByLoginId(loginRequest.loginId)
             ?: throw InvalidInputException("loginId", "존재하지 않는 아이디입니다.")
-        
-        //비밀번호 검증
         if (!passwordEncoder.matches(loginRequest.password, member.password)) {
-            throw InvalidInputException("password", "비밀번호가 일치하지 않습니다.")
+            throw PasswordMismatchException("password", "비밀번호가 일치하지 않습니다.")
         }
-        
-        //JWT 토큰 생성
-        val tokenInfo = jwtTokenProvider.generateToken(member.id!!, member.loginId)
-        
+
+        val memberRoles = memberRoleRepository.findByMember(member)
+        val role = memberRoles.firstOrNull()?.role?.name ?: throw InvalidInputException("role", "회원 권한 정보가 없습니다.")
+
+        val tokenInfo = jwtTokenProvider.createToken(member.loginId, role)
         return LoginResponse(
             accessToken = tokenInfo.accessToken,
             refreshToken = tokenInfo.refreshToken,
-            tokenType = "Bearer",
-            expiresIn = tokenInfo.accessTokenExpirationTime
+            expiresIn = tokenInfo.expiresIn
         )
     }
 
-    /**
-     * 내 정보 조회
-     */
     fun getMyInfo(memberId: Long): MemberResponse {
-        val member = memberRepository.findById(memberId)
-            .orElseThrow { InvalidInputException("memberId", "존재하지 않는 회원입니다.") }
-        
+        val member = memberRepository.findByIdOrNull(memberId) ?: throw InvalidInputException("id", "존재하지 않는 회원입니다.")
         return MemberResponse.from(member)
     }
 
-    /**
-     * 내 정보 수정
-     */
     fun updateMyInfo(memberId: Long, updateRequest: MemberDtoRequest): String {
-        val member = memberRepository.findById(memberId)
-            .orElseThrow { InvalidInputException("memberId", "존재하지 않는 회원입니다.") }
-        
-        //이름, 생년월일, 성별, 이메일만 수정 가능 (로그인ID, 비밀번호는 별도 처리)
-        member.name = updateRequest.name
-        member.birthDate = updateRequest.birthDate
-        member.gender = updateRequest.gender
-        member.email = updateRequest.email
-        
+        val member = memberRepository.findByIdOrNull(memberId) ?: throw InvalidInputException("id", "존재하지 않는 회원입니다.")
+
+        member.password = passwordEncoder.encode(updateRequest.password!!)
+        member.name = updateRequest.name!!
+        member.birthDate = LocalDate.parse(updateRequest.birthDate, DateTimeFormatter.ofPattern("yyyy-MM-dd"))
+        member.gender = Gender.valueOf(updateRequest.gender!!)
+        member.email = updateRequest.email!!
+
         memberRepository.save(member)
-        return "회원 정보가 수정되었습니다."
+
+        return "내 정보가 수정되었습니다."
     }
-        
 }

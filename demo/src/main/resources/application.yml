@@ -29,5 +29,9 @@ logging:
       hibernate:
         SQL: debug
         type.descriptor.sql: trace
+# 기존 jwt 설정을 수정하고 토큰 만료 시간 설정을 추가합니다.
 jwt:
   secret: DadFufN4Oui8Bfv3ScFj6R9fyJ9hD45E6AGFsXgFsRhT4YSdSb
+  token:
+    access-expiration-time: 3600000
+    refresh-expiration-time: 86400000
