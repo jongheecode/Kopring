@@ -60,7 +60,6 @@ class MemberService(
         val role = memberRoles.firstOrNull()?.role?.name ?: throw InvalidInputException("role", "회원 권한 정보가 없습니다.")
 
         val tokenInfo = jwtTokenProvider.createToken(member.loginId, role)
-        // tokenInfo가 LoginResponse 타입이므로 expiresIn을 바로 가져올 수 있습니다.
         return LoginResponse(
             accessToken = tokenInfo.accessToken,
             refreshToken = tokenInfo.refreshToken,
