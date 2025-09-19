@@ -1,116 +1,64 @@
-package com.example.demo.member.dto
+package com.example.demo.member.controller
 
-import com.example.demo.common.annotation.ValidEnum
-import com.example.demo.common.status.Gender
-import com.example.demo.member.entity.Member
-import com.fasterxml.jackson.annotation.JsonProperty
-import jakarta.validation.constraints.Email
-import jakarta.validation.constraints.NotBlank
-import jakarta.validation.constraints.Pattern
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
+import com.example.demo.common.authority.CustomUserDetails
+import com.example.demo.common.dto.BaseResponse
+import com.example.demo.member.dto.LoginRequest
+import com.example.demo.member.dto.MemberDtoRequest
+import com.example.demo.member.dto.MemberResponse
+import com.example.demo.member.dto.LoginResponse
+import com.example.demo.member.service.MemberService
+import jakarta.validation.Valid
+import org.springframework.security.core.Authentication
+import org.springframework.web.bind.annotation.*
 
-// 회원가입 요청 객체
-data class MemberDtoRequest (
-    val id: Long?,
 
-    @field:NotBlank
-    @JsonProperty("loginId")
-    val loginId:String?, // 변경: 공개 필드
-
-    @field:NotBlank
-    @field:Pattern(
-        regexp = "^(?=.*[a-zA-z])(?=.*[0-9])(?=.*[!@#\$%^&*])[a-zA-Z0-9!@#\$%^&*]{8,20}\$",
-        message = "영문, 숫자, 특수문자를 포함한 8~20자리로 입력해주세요."
-    )
-    @JsonProperty("password")
-    val password:String?, // 변경: 공개 필드
-
-    @field:NotBlank
-    @JsonProperty("name")
-    val name:String?,     // 변경: 공개 필드
-
-    @field:NotBlank
-    @field:Pattern(
-        regexp = "^([12]\\d{3}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01]))$",
-        message = "날짜형식(YYYY-DD-MM)을 확인해주세요."
-    )
-    @JsonProperty("birthDate")
-    val birthDate: String?,  // 변경: 공개 필드
-
-    @field:NotBlank
-    @field:ValidEnum(enumClass = Gender::class, message = "MAN 이나 WOMAN 중 하나를 선택해주세요.")
-    @JsonProperty("gender")
-    val gender: String?, // 변경: 공개 필드
-
-    @field:NotBlank
-    @field:Email
-    @JsonProperty("email")
-    val email: String?  // 변경: 공개 필드
+//HTTP 요청 수신, 입력 검증, 서비스 호출, 응답 매핑
+@RequestMapping("/api/member")
+@RestController
+class MemberController(
+    private val memberService: MemberService
 ) {
-    fun toEntity(): Member=
-        Member(id, loginId!!, password!!, name!!, birthDate!!.toLocalDate(), Gender.valueOf(gender!!), email!!)
 
-    private fun String.toLocalDate(): LocalDate=
-        LocalDate.parse(this, DateTimeFormatter.ofPattern("yyyy-MM-dd"))
-}
+    /**
+     * 회원가입
+     */
+    @PostMapping("/signup")
+    fun signUP(@RequestBody @Valid memberDtoRequest: MemberDtoRequest): BaseResponse<Unit> {
+        val resultMsg: String=memberService.signUp(memberDtoRequest)
+        return BaseResponse(message = resultMsg)
+    }
 
-// 로그인 요청 DTO
-data class LoginRequest(
-    @field:NotBlank
-    @JsonProperty("loginId")
-    val loginId: String,
+    /**
+     * 로그인 - JWT 토큰 발행
+     */
+    @PostMapping("/login")
+    fun login(@RequestBody @Valid loginRequest: LoginRequest): BaseResponse<LoginResponse> {
+        val loginResponse = memberService.login(loginRequest)
+        return BaseResponse(data = loginResponse, message = "로그인 성공")
+    }
 
-    @field:NotBlank
-    @JsonProperty("password")
-    val password: String
-)
+    /**
+     * 내 정보 조회 (JWT 토큰 필요)
+     */
+    @GetMapping("/me")
+    fun getMyInfo(authentication: Authentication): BaseResponse<MemberResponse> {
+        val userDetails = authentication.principal as CustomUserDetails
+        val memberId = userDetails.getMemberId() //CustomUserDetails에서 회원 ID 추출
+        val memberResponse = memberService.getMyInfo(memberId)
+        return BaseResponse(data = memberResponse, message = "내 정보 조회 성공")
+    }
 
-// 로그인 응답 DTO (토큰 정보 포함)
-data class LoginResponse(
-    @JsonProperty("accessToken")
-    val accessToken: String,
-
-    @JsonProperty("refreshToken")
-    val refreshToken: String,
-
-    @JsonProperty("tokenType")
-    val tokenType: String = "Bearer",
-
-    @JsonProperty("expiresIn")
-    val expiresIn: Long
-)
-
-// 회원 정보 응답 DTO
-data class MemberResponse(
-    @JsonProperty("id")
-    val id: Long,
-
-    @JsonProperty("loginId")
-    val loginId: String,
-
-    @JsonProperty("name")
-    val name: String,
-
-    @JsonProperty("birthDate")
-    val birthDate: String,
-
-    @JsonProperty("gender")
-    val gender: String,
-
-    @JsonProperty("email")
-    val email: String
-) {
-    companion object {
-        fun from(member: Member): MemberResponse {
-            return MemberResponse(
-                id = member.id!!,
-                loginId = member.loginId,
-                name = member.name,
-                birthDate = member.birthDate.toString(),
-                gender = member.gender.name,
-                email = member.email
-            )
-        }
+    /**
+     * 내 정보 수정 (JWT 토큰 필요)
+     */
+    @PutMapping("/me")
+    fun updateMyInfo(
+        authentication: Authentication,
+        @RequestBody @Valid updateRequest: MemberDtoRequest
+    ): BaseResponse<Unit> {
+        val userDetails = authentication.principal as CustomUserDetails
+        val memberId = userDetails.getMemberId() //CustomUserDetails에서 회원 ID 추출
+        val resultMsg = memberService.updateMyInfo(memberId, updateRequest)
+        return BaseResponse(message = resultMsg)
     }
 }
